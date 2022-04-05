@@ -13,7 +13,7 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   static const _soundRecordUpdatesIntervalMillisWeb = 100;
   static const _aBitHumanVoiceRelatedFrequenciesIndexesWeb = [1, 8, 9, 10];
   static const _volumeToleranceThresholdWeb = 70;
-  static const _volumeToleranceThresholdMobile = 50;
+  static const _volumeToleranceThresholdMobile = 60;
   static const _delayFromLoudToSilentWeb = 400;
 
   MediaRecorder? _recorderWeb;
@@ -97,6 +97,7 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   }
 
   void _onDataAvailableMobile(NoiseReading noiseReading) {
+    print(noiseReading);
     if (noiseReading.maxDecibel > _volumeToleranceThresholdMobile &&
         noiseReading.meanDecibel > _volumeToleranceThresholdMobile) {
       _handleCurrentLoud();
