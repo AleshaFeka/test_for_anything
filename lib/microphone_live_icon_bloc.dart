@@ -97,7 +97,6 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   }
 
   void _onDataAvailableMobile(NoiseReading noiseReading) {
-    print(noiseReading);
     if (noiseReading.maxDecibel > _volumeToleranceThresholdMobile &&
         noiseReading.meanDecibel > _volumeToleranceThresholdMobile) {
       _handleCurrentLoud();

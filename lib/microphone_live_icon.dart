@@ -29,7 +29,7 @@ class _MicrophoneLiveIconState extends State<MicrophoneLiveIcon> {
     _bloc = context.read<MicrophoneLiveIconBloc>();
     _bloc.startListenMicrophone();
     _controller = OneShotAnimation(
-      'loading',
+      'Sound',
       autoplay: false,
     );
     _controller.isActiveChanged.addListener(() {
@@ -112,7 +112,7 @@ class _MicrophoneLiveIconState extends State<MicrophoneLiveIcon> {
             height: 100,
             width: 100,
             child: RiveAnimation.asset(
-              'rive/preloader.riv',
+              'assets/rive/sound.riv',
               controllers: [_controller],
             )),
         Container(
