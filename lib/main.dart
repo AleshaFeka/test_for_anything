@@ -21,7 +21,7 @@ class BSApp extends StatelessWidget {
 
 */
 
-import 'package:blutooth_serial_sender/microphone_live_icon.dart';
+import 'package:blutooth_serial_sender/microphone_live_icon/microphone_live_icon.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(WebcamApp());
@@ -48,7 +48,14 @@ class _WebcamPageState extends State<WebcamPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Center(
-          child: MicrophoneLiveIconFlow(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("-------"),
+              MicrophoneLiveIconFlow(),
+              Text("-------"),
+            ],
+          ),
         ),
       );
 }

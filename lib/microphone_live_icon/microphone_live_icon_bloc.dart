@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'microphone_live_icon_html_stub.dart' if (dart.library.html) 'dart:html';
 
-import 'package:blutooth_serial_sender/microphone_live_icon_state.dart';
+import 'package:blutooth_serial_sender/microphone_live_icon/microphone_live_icon_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:noise_meter/noise_meter.dart';
@@ -14,18 +14,19 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   static const _aBitHumanVoiceRelatedFrequenciesIndexesWeb = [1, 8, 9, 10];
   static const _volumeToleranceThresholdWeb = 70;
   static const _volumeToleranceThresholdMobile = 60;
-  static const _delayFromLoudToSilentWeb = 400;
+  static const _delayFromLoudToSilent = 400;
 
   MediaRecorder? _recorderWeb;
-  int _lastSilenceDetectedTimestamp = DateTime.now().millisecondsSinceEpoch;
-  bool _timestampWasSetWhenSilent = false;
+  int _silenceDetectedTimestamp = DateTime.now().millisecondsSinceEpoch;
+  int _silentStateEmittedTimestamp = DateTime.now().millisecondsSinceEpoch;
+  bool _silentStateEmittedTimestampWasSet = false;
+  bool _silenceDetectedTimestampWasSet = false;
   bool _wasLoud = false;
 
-  bool _isRecording = false;
   late StreamSubscription<NoiseReading>? _noiseSubscription;
   late final NoiseMeter _noiseMeter;
 
-  MicrophoneLiveIconBloc() : super(MicrophoneLiveIconDisableState());
+  MicrophoneLiveIconBloc() : super(MicrophoneLiveIconLongSilentState());
 
   @override
   Future<void> close() {
@@ -34,7 +35,7 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   }
 
   void onMicrophoneErrorMobile(Object error) {
-    print(error.toString());
+    emit(MicrophoneLiveIconErrorState(message: error.toString()));
   }
 
   Future<void> startListenMicrophone() async {
@@ -46,12 +47,11 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   }
 
   Future<void> _startListenMicrophoneMobile() async {
-    print("startListenMicrophoneMobile");
     _noiseMeter = NoiseMeter(onMicrophoneErrorMobile);
     try {
       _noiseSubscription = _noiseMeter.noiseStream.listen(_onDataAvailableMobile);
     } on Exception catch (exception) {
-      print('startRecorder exception: $exception');
+      emit(MicrophoneLiveIconErrorState(message: exception.toString()));
     }
   }
 
@@ -76,14 +76,11 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
   }
 
   Future<void> _stopListenMicrophoneMobile() async {
-    print("_stopListenMicrophoneMobile");
     try {
       _noiseSubscription?.cancel();
       _noiseSubscription = null;
       emit(MicrophoneLiveIconDisableState());
-
     } catch (err) {
-      print('stopRecorder error: $err');
       emit(MicrophoneLiveIconErrorState(message: err.toString()));
     }
   }
@@ -121,26 +118,44 @@ class MicrophoneLiveIconBloc extends Cubit<MicrophoneLiveIconState> {
 
   void _handleCurrentSilent() {
     if (_wasLoud) {
-      if (_timestampWasSetWhenSilent) {
-        final now = DateTime.now();
-        if ((now.millisecondsSinceEpoch - _lastSilenceDetectedTimestamp) > _delayFromLoudToSilentWeb) {
-          _timestampWasSetWhenSilent = false;
-          _wasLoud = false;
-          print("off!");
-          emit(MicrophoneLiveIconSilentState());
+      if (_silenceDetectedTimestampWasSet) {
+        if ((DateTime.now().millisecondsSinceEpoch - _silenceDetectedTimestamp) > _delayFromLoudToSilent) {
+          _handleLongSilent();
         }
       } else {
-        _lastSilenceDetectedTimestamp = DateTime.now().millisecondsSinceEpoch;
-        _timestampWasSetWhenSilent = true;
+        _handleShortSilent();
+      }
+    } else {
+      _handleVeryLongSilent();
+    }
+  }
+
+  void _handleVeryLongSilent() {
+    if (_silentStateEmittedTimestampWasSet) {
+      if ((DateTime.now().millisecondsSinceEpoch - _silentStateEmittedTimestamp) > 2000) {
+        _silentStateEmittedTimestampWasSet = false;
+        emit(MicrophoneLiveIconLongSilentState());
       }
     }
   }
 
+  void _handleShortSilent() {
+    _silenceDetectedTimestamp = DateTime.now().millisecondsSinceEpoch;
+    _silenceDetectedTimestampWasSet = true;
+  }
+
+  void _handleLongSilent() {
+    _silenceDetectedTimestampWasSet = false;
+    _wasLoud = false;
+    emit(MicrophoneLiveIconSilentState());
+    _silentStateEmittedTimestamp = DateTime.now().millisecondsSinceEpoch;
+    _silentStateEmittedTimestampWasSet = true;
+  }
+
   void _handleCurrentLoud() {
-    _timestampWasSetWhenSilent = false;
+    _silenceDetectedTimestampWasSet = false;
     if (!_wasLoud) {
       _wasLoud = true;
-      print("on!");
       emit(MicrophoneLiveIconLoudState());
     }
   }

@@ -4,6 +4,8 @@ class MicrophoneLiveIconDisableState extends MicrophoneLiveIconState {}
 
 class MicrophoneLiveIconSilentState extends MicrophoneLiveIconState {}
 
+class MicrophoneLiveIconLongSilentState extends MicrophoneLiveIconState {}
+
 class MicrophoneLiveIconLoudState extends MicrophoneLiveIconState {}
 
 class MicrophoneLiveIconErrorState extends MicrophoneLiveIconState {
